@@ -40,7 +40,6 @@ namespace csdbmt
                 string.Join(", ", from s in SQLBody select "[" + string.Join(",", s) + "]"),
                 string.Join(", ", from s in SQLFoot select "[" + string.Join(",", s) + "]"),
                 string.Join(", ", from s in SQLTail select "[" + string.Join(",", s) + "]")
-                //"","","",""
                 );
         }
         public class Builder
@@ -130,6 +129,8 @@ namespace csdbmt
                     DeleteParse(x);
                     break;
                 case "update":
+                    UpdateParse(x);
+                    break;
                 case "select":
                     break;
                 default:
@@ -138,7 +139,6 @@ namespace csdbmt
             }
             return newStruct;
         }
-
         private void CreateParse(string x)
         {
             Match m = Regex.Match(x, "create[ ]+(table|database)[ ]+([A-z0-9]+)([ ]*\\((.+)\\)|)([ ]*from[ ]+([A-z0-9]+)|)");
@@ -185,23 +185,23 @@ namespace csdbmt
         }
         private void InsertInto(string x)
         {
-            Match m = Regex.Match(x, "insert[ ]+into[ ]+([A-z0-9]+)[ ]*(\\(([^\\)]+)\\)|[^ ]*)[ ]*values[ ]*(\\(.+\\))[ ]*from[ ]*([A-z0-9]*)");
+            Match m = Regex.Match(x, "insert[ ]+into[ ]+([A-z0-9]*)[ ]*\\.[ ]*([A-z0-9]+)[ ]*(\\(([^\\)]+)\\)|[^ ]*)[ ]*values[ ]*(\\(.+\\))");
             string tableName;
             string databaseName;
             List<string[]> foot = new List<string[]>();
-            string[][] Names = new string[1][];
+            string[][] Names = new string[1][] { new string[] {"" } };
 
             if (m.Success)
             {
-                tableName = m.Groups[1].ToString();
-                databaseName = m.Groups[m.Groups.Count - 1].ToString();
-                if (m.Groups[3].ToString() != "")
-                {
-                    Names[0] = m.Groups[3].ToString().Split(",");
-                }
+                tableName = m.Groups[2].ToString();
+                databaseName = m.Groups[1].ToString();
                 if (m.Groups[4].ToString() != "")
                 {
-                    string temp = m.Groups[4].ToString();
+                    Names[0] = m.Groups[3].ToString().Replace("(","").Replace(")","").Trim().Split(",");
+                }
+                if (m.Groups[5].ToString() != "")
+                {
+                    string temp = m.Groups[5].ToString();
                     foreach (string s in Regex.Split(temp.Substring(temp.IndexOf("(") + 1, temp.LastIndexOf(")") - temp.IndexOf("(") - 1),
                         "[ ]*\\)[ ]*,[ ]*\\([ ]*"))
                     {
@@ -226,18 +226,48 @@ namespace csdbmt
                 tableName = m.Groups[3].ToString().Trim();
                 List<string[]> body = new List<string[]>();
                 string whereSub = m.Groups[5].ToString().Trim();
-                foreach (string s in whereSub.Split("or"))
+                foreach (string s in whereSub.Split(" or "))
                 {
-                    string[] temp = s.Split("and");
+                    string[] temp = s.Split(" and ");
                     body.Add(temp);
                 }
                 newStruct = new SQLStruct.Builder(whereSub == "" ? "delete" : "delete where")
                     .setSQLHead(new string[] { databaseName, tableName })
                     .setSQLBody(body.ToArray())
                     .Build();
+            }
+        }
+        private void UpdateParse(string x)
+        {
+            Match m = Regex.Match(x, "update[ ]+([A-z0-9]*)[ ]*\\.[ ]*([A-z0-9]+)[ ]+set[ ]*(\\((.*)\\))([ ]+where(.+)|)");
+            string tableName;
+            string databaseName;
+            if (m.Success)
+            {
+                databaseName = m.Groups[1].ToString().Trim();
+                tableName = m.Groups[2].ToString().Trim();
+                List<string[]> body = new List<string[]>();
+                foreach (string s in m.Groups[4].ToString().Trim().Split(","))
+                {
+                    string[] temp = s.Trim().Split("=");
+                    body.Add(temp);
+                }
+                string whereSub = m.Groups[6].ToString().Trim();
+                List<string[]> foot = new List<string[]>();
+                foreach (string s in whereSub.Split(" or "))
+                {
+                    string[] temp = s.Trim().Split(" and ");
+                    foot.Add(temp);
+                }
+                newStruct = new SQLStruct.Builder(whereSub == "" ? "delete" : "delete where")
+                    .setSQLHead(new string[] { databaseName, tableName })
+                    .setSQLBody(body.ToArray())
+                    .setSQLFoot(foot.ToArray())
+                    .Build();
 
             }
 
         }
+
     }
 }
