@@ -111,7 +111,6 @@ namespace csdbmt
     }
     class SQLParse
     {
-        public string p = @"(create|drop|insert|delete|update|select|from|set|where|order by|values)";
         public SQLStruct newStruct = new SQLStruct.Builder("None").Build();
         public SQLStruct Parse(string x)
         {
@@ -140,38 +139,26 @@ namespace csdbmt
             return newStruct;
         }
 
-
-
         private void CreateParse(string x)
         {
-            string[] sqlSplit = x.Split(" ");
-            Console.WriteLine(sqlSplit.ToString());
-            switch (sqlSplit[1])
+            Match m = Regex.Match(x, "create[ ]+(table|database)[ ]+([A-z0-9]+)([ ]*\\((.+)\\)|)([ ]*from[ ]+([A-z0-9]+)|)");
+            string tableName;
+            string databaseName;
+            if (m.Success)
             {
-                case "table":
-                    //b.setSQLMode("create table");
-                    string[][] body;
-                    string tableName = x.Substring(x.IndexOf("table") + 5, x.IndexOf("(") - x.IndexOf("table") - 5);
-                    string databaseName = x.Substring(x.IndexOf("from") + 4);
-                    {
-                        string otherString = x.Substring(x.IndexOf(tableName) + tableName.Length, x.IndexOf(")") - x.IndexOf(tableName) - tableName.Length);
-                        otherString = otherString.Replace("(", "").Replace(")", "").Trim();
-                        string[] otherStringSplit = otherString.Split(",");
-                        body = new string[otherStringSplit.Length][];
-                        for (int i = 0; i < otherStringSplit.Length; i++)
-                        {
-                            string[] items = otherStringSplit[i].Split(" ");
-                            body[i] = items;
-                        }
-                    }
+                databaseName = m.Groups[2].ToString().Trim();
+                tableName = m.Groups[m.Groups.Count - 1].ToString().Trim();
+                List<string[]> body = new List<string[]>();
+                foreach (string s in m.Groups[3].ToString().Trim().Split(","))
+                {
+                    string[] temp = s.Split(" ");
+                    body.Add(temp);
+                }
+                newStruct = new SQLStruct.Builder("create " + m.Groups[1].ToString())
+                    .setSQLHead(new string[] { databaseName, tableName })
+                    .setSQLBody(body.ToArray())
+                    .Build();
 
-                    newStruct = new SQLStruct.Builder("create table")
-                        .setSQLHead(new string[] { tableName, databaseName })
-                        .setSQLBody(body).Build();
-                    break;
-                case "database":
-                    newStruct = new SQLStruct.Builder("create database").setSQLHead(new string[] { x.Substring(x.IndexOf("database") + 8), }).Build();
-                    break;
             }
         }
         private void DropParse(string x)
