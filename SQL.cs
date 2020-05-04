@@ -128,7 +128,8 @@ namespace csdbmt
                     InsertInto(x);
                     break;
                 case "delete":
-
+                    DeleteParse(x);
+                    break;
                 case "update":
                 case "select":
                     break;
@@ -138,7 +139,10 @@ namespace csdbmt
             }
             return newStruct;
         }
-        public void CreateParse(string x)
+
+
+
+        private void CreateParse(string x)
         {
             string[] sqlSplit = x.Split(" ");
             Console.WriteLine(sqlSplit.ToString());
@@ -170,7 +174,7 @@ namespace csdbmt
                     break;
             }
         }
-        public void DropParse(string x)
+        private void DropParse(string x)
         {
             string[] sqlSplit = x.Split(" ");
             //SQLStruct.Builder b = new SQLStruct.Builder();
@@ -192,7 +196,7 @@ namespace csdbmt
                     break;
             }
         }
-        public void InsertInto(string x)
+        private void InsertInto(string x)
         {
             Match m = Regex.Match(x, "insert[ ]+into[ ]+([A-z0-9]+)[ ]*(\\(([^\\)]+)\\)|[^ ]*)[ ]*values[ ]*(\\(.+\\))[ ]*from[ ]*([A-z0-9]*)");
             string tableName;
@@ -211,18 +215,42 @@ namespace csdbmt
                 if (m.Groups[4].ToString() != "")
                 {
                     string temp = m.Groups[4].ToString();
-                    foreach (string s in Regex.Split(temp.Substring(temp.IndexOf("(")+1,temp.LastIndexOf(")")- temp.IndexOf("(")-1),
+                    foreach (string s in Regex.Split(temp.Substring(temp.IndexOf("(") + 1, temp.LastIndexOf(")") - temp.IndexOf("(") - 1),
                         "[ ]*\\)[ ]*,[ ]*\\([ ]*"))
                     {
-                        foot.Add( s.Replace("(", "").Replace(")", "").Split(","));
+                        foot.Add(s.Replace("(", "").Replace(")", "").Split(","));
                     }
                 }
                 newStruct = new SQLStruct.Builder("insert into")
-                    .setSQLHead(new string[] { tableName, databaseName })
+                    .setSQLHead(new string[] { databaseName, tableName })
                     .setSQLBody(Names)
                     .setSQLFoot(foot.ToArray())
                     .Build();
             }
+        }
+        private void DeleteParse(string x)
+        {
+            Match m = Regex.Match(x, "delete[ ]+from[ ]+(([A-z0-9]+)\\.([A-z0-9]+))([ ]+where(.+)|)");
+            string tableName;
+            string databaseName;
+            if (m.Success)
+            {
+                databaseName = m.Groups[2].ToString().Trim();
+                tableName = m.Groups[3].ToString().Trim();
+                List<string[]> body = new List<string[]>();
+                string whereSub = m.Groups[5].ToString().Trim();
+                foreach (string s in whereSub.Split("or"))
+                {
+                    string[] temp = s.Split("and");
+                    body.Add(temp);
+                }
+                newStruct = new SQLStruct.Builder(whereSub == "" ? "delete" : "delete where")
+                    .setSQLHead(new string[] { databaseName, tableName })
+                    .setSQLBody(body.ToArray())
+                    .Build();
+
+            }
+
         }
     }
 }
