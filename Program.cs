@@ -6,7 +6,7 @@ namespace csdbmt
         static void Main(string[] args)
         {
             string sql;
-            SQLOperator o = new SQLOperator();
+            SQLManager o = new SQLManager();
             while (true)
             {
                 //try

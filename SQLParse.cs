@@ -45,10 +45,10 @@ namespace csdbmt
             string databaseName;
             if (m.Success)
             {
-                databaseName = m.Groups[2].ToString().Trim();
-                tableName = m.Groups[m.Groups.Count - 1].ToString().Trim();
+                tableName = m.Groups[2].ToString().Trim();
+                databaseName = m.Groups[m.Groups.Count - 1].ToString().Trim();
                 List<string[]> body = new List<string[]>();
-                foreach (string s in m.Groups[3].ToString().Trim().Split(","))
+                foreach (string s in m.Groups[3].ToString().Replace("(", "").Replace(")", "").Trim().Split(","))
                 {
                     string[] temp = s.Split(" ");
                     body.Add(temp);
@@ -62,24 +62,16 @@ namespace csdbmt
         }
         private void DropParse(string x)
         {
-            string[] sqlSplit = x.Split(" ");
-            //SQLStruct.Builder b = new SQLStruct.Builder();
-            switch (sqlSplit[1])
+            Match m = Regex.Match(x, "drop[ ]+(table|database)[ ]+([A-z0-9]+)( +from[ ]+([A-z0-9]+)|)");
+            string dropName;
+            string databaseName;
+            if (m.Success)
             {
-                case "table":
-                    string otherString = x.Substring(x.IndexOf("table") + 5);
-                    int from_index_of_oS = otherString.IndexOf("from");
-
-                    newStruct = new SQLStruct.Builder("drop table")
-                        .setSQLHead(new string[] { x.Substring(x.IndexOf("table") + 5, from_index_of_oS - x.IndexOf("table") + 5), })
-                        .setSQLBody(new string[][] { new string[] { x.Substring(from_index_of_oS + 4) } })
-                        .Build();
-                    break;
-                case "database":
-                    newStruct = new SQLStruct.Builder("drop database")
-                        .setSQLHead(new string[] { x.Substring(x.IndexOf("database") + 8), })
-                        .Build();
-                    break;
+                dropName = m.Groups[2].ToString().Trim();
+                databaseName = m.Groups[4].ToString().Trim();
+                newStruct = new SQLStruct.Builder("drop " + m.Groups[1].ToString())
+                    .setSQLHead(new string[] { databaseName, dropName })
+                    .Build();
             }
         }
         private void InsertInto(string x)
