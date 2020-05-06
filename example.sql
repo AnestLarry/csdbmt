@@ -11,13 +11,19 @@ insert into USA.people values(1,lisa,aho)
 insert into Japan.people(id,name,nick) values(1,lisa,aho)
 insert    into    earth.people ( id ,  name  , nick)   values  ( 1 , lisa , aho ),(2,aho,lisa)  ,  (3,haha,hehe)
 
-delete from database.tableName [where Name1 = Value1 <and/or> Name2 > Value ....]
+delete from database.tableName [where Database.Table.Name1 = Value1 <and/or> Database.Table.Name2 > Value ....]
 delete from ear.peo
-delete from ear.peo where id = 1 and name = sa
-delete from ear.peo where id < 1 or name = sa and st = ssssa
-delete from ear.peo where address = "Mars" or id < 1 or name = sa and st = ssssa
+delete from ear.peo where ear.peo.id = 1 and ear.peo.name = sa
+delete from ear.peo where ear.peo.id < 1 or ear.peo.name = sa and ear.peo.st = ssssa
+delete from ear.peo where ear.peo.address = "Mars" or ear.peo.id < 1 or ear.peo.name = sa and ear.peo.st = ssssa
 
-update DatabaseName.tableName set (Name1 = Value1 [,Name2 = Value2 ...]) [where Name1 = Value1 [,Name2 = Value2 ...]]
-update earth.peo set (name = world)
-update earth.peo set (name = world,id = 2) where id=1
-update earth.peo set (name = world,id = 2) where id=1 and name = world or address = Mars
+update DatabaseName.tableName set Database.Table.Name1 = Value1 [,Database.Table.Name2 = Value2 ...] [where Database.Table.Name1 = Value1 [,Database.Table.Name2 = Value2 ...]]
+update earth.peo set name = world
+update earth.peo set name = world,id = 2 where ear.peo.id=1
+update earth.peo set name = world,id = 2 where ear.peo.id=1 and ear.peo.name = world
+update earth.peo set name = world,id = 2 where ear.peo.id=1 or ear.peo.name = world
+update earth.peo set name = world,id = 2 where ear.peo.id=1 and ear.peo.name = world or ear.peo.address = Mars
+
+select DatabaseName.tableName.Name1 [,DatabaseName.tableName.Name2 ...] where DatabaseName.tableName.Name3 = Value1 [<and/or> DatabaseName.tableName.Name4 >Value2] 
+select ear.peo.id,ear.peo.name
+select ear.peo.id,ear.peo.name where ear.peo.id > 5 and ear.peo.name = sss or ear.peo.sgender = 0
