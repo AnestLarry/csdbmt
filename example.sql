@@ -6,8 +6,7 @@ drop <database/table> Name from databaseName
 drop database earth
 drop table people from earth
 
-insert into databaseName.tableName [(name1,name2...)] values ([value1,value2...]) [,([value1,value2...]),([value1,value2...])...]
-insert into USA.people values(1,lisa,aho)
+insert into databaseName.tableName (name1,name2...) values ([value1,value2...]) [,([value1,value2...]),([value1,value2...])...]
 insert into Japan.people(id,name,nick) values(1,lisa,aho)
 insert    into    earth.people ( id ,  name  , nick)   values  ( 1 , lisa , aho ),(2,aho,lisa)  ,  (3,haha,hehe)
 

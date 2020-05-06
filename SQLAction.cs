@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace csdbmt
 {
@@ -65,9 +67,44 @@ namespace csdbmt
                         }
                         break;
                     }
+                case "insert into":
+                    {
+                        if (!(s.SQLHead.Length>1))
+                        {
+                            throw new Exception("SQLAction -> Handle(): insert into: SQLHead Length Error.\nDo you miss table/database name?");
+                        }
+                        if (!(s.SQLBody.Length>0))
+                        {
+                            throw new Exception("SQLAction -> Handle(): insert into: SQLBody Length Error.\nDo you miss field(s)?");
+                        }
+                        if (!(s.SQLFoot.Length > 0))
+                        {
+                            throw new Exception("SQLAction -> Handle(): insert into: SQLFoot Length Error.\nDo you miss value(s)?");
+                        }
+                        Database db = dbs.Get(s.SQLHead[0]);
+                        db.Add(s.SQLHead[1]);
+                        DatabaseTable dt = db.Get(s.SQLHead[1]);
+                        List<DatabaseTableField> dtfs = new List<DatabaseTableField>();
+                        foreach (string i in s.SQLBody[0])
+                        {
+                            dtfs.Add(dt.Get(i));
+                        }
+                        foreach (string[] i in s.SQLFoot)
+                        {
+                            for (int j = 0; j < i.Length; j++)
+                            {
+                                dtfs[j].Add(i[j],dtfs[j].dataType);
+                            }
+                        }
+                        break;
+                    }
                 default:
                     throw new Exception("SQLManager -> Work(): An unexcepted SQL action type.");
             }
+        }
+        public string ToString()
+        {
+            return dbs.ToString();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace csdbmt
 {
@@ -81,8 +82,8 @@ namespace csdbmt
     }
     class DatabaseTable
     {
-        public Dictionary<string, DataBaseTableField> databaseTableFields = new Dictionary<string, DataBaseTableField>();
-        public DataBaseTableField Get(string x)
+        public Dictionary<string, DatabaseTableField> databaseTableFields = new Dictionary<string, DatabaseTableField>();
+        public DatabaseTableField Get(string x)
         {
             foreach (string i in databaseTableFields.Keys)
             {
@@ -114,17 +115,28 @@ namespace csdbmt
                     throw new Exception("DatabaseStuct -> Put(): Exists in tables.");
                 }
             }
-            databaseTableFields.Add(Name, new DataBaseTableField(DataType));
+            databaseTableFields.Add(Name, new DatabaseTableField(DataType));
         }
     }
-    public class DataBaseTableField
+    public class DatabaseTableField
     {
         private string DataType = "";
         public string dataType { get => DataType; }
         private List<dynamic> Data = new List<dynamic>();
-        public DataBaseTableField(string dataType)
+        public DatabaseTableField(string dataType)
         {
-            DataType = dataType;
+            switch (dataType)
+            {
+                case "int":
+                case "float":
+                case "string":
+                case "bool":
+                    DataType = dataType;
+                    break;
+                default:
+                    throw new Exception("DatabaseTableField -> Type out of suppose.");
+                    break;
+            }
         }
         public IEnumerable<dynamic> travel()
         {
@@ -133,6 +145,29 @@ namespace csdbmt
                 yield return i;
             }
         }
-
+        public void Add(dynamic x,string xtype) {
+            if (xtype != dataType)
+            {
+                throw new Exception("DatabaseTableField -> Add(): Type is change!");
+            }
+            switch (xtype)
+            {
+                case "int":
+                    Data.Add((int)x);
+                    break;
+                case "float":
+                    Data.Add((double)x);
+                    break;
+                case "string":
+                    Data.Add((string)x);
+                    break;
+                case "bool":
+                    Data.Add((bool)x);
+                    break;
+                default:
+                    throw new Exception("DatabaseTableField -> Add(): Type out of suppose.");
+                    break;
+            }
+        }
     }
 }

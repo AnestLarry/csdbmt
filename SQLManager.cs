@@ -18,6 +18,7 @@ namespace csdbmt
             {
                 Console.WriteLine(e.Message);
             }
+            //Console.WriteLine(sa.ToString());
         }
     }
 }
