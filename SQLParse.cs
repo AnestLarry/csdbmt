@@ -6,114 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace csdbmt
 {
-    class SQLOperator
-    {
-        SQLParse Parser = new SQLParse();
-        public void Work(string sql)
-        {
-
-            SQLStruct s = Parser.Parse(sql);
-            Console.WriteLine(s.ToString());
-        }
-    }
-    class SQLStruct
-    {
-        public string SQLMode;
-        public string[] SQLHead;
-        public string[][] SQLBody;
-        public string[][] SQLFoot;
-        public string[][] SQLTail;
-        private SQLStruct(Builder x)
-        {
-            this.SQLMode = x.getSQLMode;
-            this.SQLHead = x.getSQLHead;
-            this.SQLBody = x.getSQLBody;
-            this.SQLFoot = x.getSQLFoot;
-            this.SQLTail = x.getSQLTail;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("SQLStruct [ \n SQLMode [{0}]\n SQLHead [{1}]\n SQLBody [{2}]\n SQLFoot [{3}]\n SQLTail [{4}]\n]",
-                SQLMode,
-                string.Join(",", SQLHead).Trim(),
-                string.Join(", ", from s in SQLBody select "[" + string.Join(",", s) + "]"),
-                string.Join(", ", from s in SQLFoot select "[" + string.Join(",", s) + "]"),
-                string.Join(", ", from s in SQLTail select "[" + string.Join(",", s) + "]")
-                );
-        }
-        public class Builder
-        {
-            private string SQLMode;
-            private string[] SQLHead;
-            private string[][] SQLBody;
-            private string[][] SQLFoot;
-            private string[][] SQLTail;
-
-            public string getSQLMode { get => SQLMode; }
-            public string[] getSQLHead { get => SQLHead; }
-            public string[][] getSQLBody { get => SQLBody; }
-            public string[][] getSQLFoot { get => SQLFoot; }
-            public string[][] getSQLTail { get => SQLTail; }
-
-            public Builder(string mode)
-            {
-                SQLMode = mode;
-            }
-            public Builder setSQLMode(string x)
-            {
-                SQLMode = x;
-                return this;
-            }
-            public Builder setSQLHead(string[] x)
-            {
-                SQLHead = x;
-                return this;
-            }
-            public Builder setSQLBody(string[][] x)
-            {
-                SQLBody = x;
-                return this;
-            }
-            public Builder setSQLFoot(string[][] x)
-            {
-                SQLFoot = x;
-                return this;
-            }
-            public Builder setSQLTail(string[][] x)
-            {
-                SQLTail = x;
-                return this;
-            }
-            public SQLStruct Build()
-            {
-                if (SQLHead == null)
-                {
-                    SQLHead = new string[] { };
-                }
-                if (SQLBody == null)
-                {
-                    SQLBody = new string[][] { };
-                }
-                if (SQLFoot == null)
-                {
-                    SQLFoot = new string[][] { };
-                }
-                if (SQLTail == null)
-                {
-                    SQLTail = new string[][] { };
-                }
-                return new SQLStruct(this);
-            }
-        }
-
-    }
     class SQLParse
     {
         public SQLStruct newStruct = new SQLStruct.Builder("None").Build();
         public SQLStruct Parse(string x)
         {
-            String Mode = x.Split(" ")[0];
+            string Mode = x.Split(" ")[0];
             switch (Mode)
             {
                 case "create":
@@ -132,6 +30,7 @@ namespace csdbmt
                     UpdateParse(x);
                     break;
                 case "select":
+                    SelectParse(x);
                     break;
                 default:
                     Console.WriteLine(String.Format("Parse(): Value Error: unexpected '{0}'", Mode));
@@ -189,7 +88,7 @@ namespace csdbmt
             string tableName;
             string databaseName;
             List<string[]> foot = new List<string[]>();
-            string[][] Names = new string[1][] { new string[] {"" } };
+            string[][] Names = new string[1][] { new string[] { "" } };
 
             if (m.Success)
             {
@@ -197,7 +96,7 @@ namespace csdbmt
                 databaseName = m.Groups[1].ToString();
                 if (m.Groups[4].ToString() != "")
                 {
-                    Names[0] = m.Groups[3].ToString().Replace("(","").Replace(")","").Trim().Split(",");
+                    Names[0] = m.Groups[3].ToString().Replace("(", "").Replace(")", "").Trim().Split(",");
                 }
                 if (m.Groups[5].ToString() != "")
                 {
@@ -239,7 +138,7 @@ namespace csdbmt
         }
         private void UpdateParse(string x)
         {
-            Match m = Regex.Match(x, "update[ ]+([A-z0-9]*)[ ]*\\.[ ]*([A-z0-9]+)[ ]+set[ ]*(\\((.*)\\))([ ]+where(.+)|)");
+            Match m = Regex.Match(x, "update[ ]+([A-z0-9]*)[ ]*\\.[ ]*([A-z0-9]+)[ ]+set *([ ]+where(.+)|)");
             string tableName;
             string databaseName;
             if (m.Success)
@@ -247,19 +146,36 @@ namespace csdbmt
                 databaseName = m.Groups[1].ToString().Trim();
                 tableName = m.Groups[2].ToString().Trim();
                 List<string[]> body = new List<string[]>();
-                foreach (string s in m.Groups[4].ToString().Trim().Split(","))
+                List<string[]> foot = new List<string[]>();
+
+                if (x.IndexOf(" where ") > -1)
+                {
+                    m = Regex.Match(x, "set.*where(.+)");
+                    string whereSub = m.Groups[1].ToString().Trim();
+
+                    foreach (string s in whereSub.Split(" or "))
+                    {
+                        string[] temp = s.Trim().Split(" and ");
+                        foot.Add(temp);
+                    }
+                }
+                if (x.IndexOf(" where ") > -1)
+                {
+                    m = Regex.Match(x, "set *(.*) *where");
+                }
+                else
+                {
+                    m = Regex.Match(x, "set *(.*)");
+
+                }
+                string setSub = m.Groups[1].ToString();
+                Console.WriteLine(setSub);
+                foreach (string s in setSub.Trim().Split(","))
                 {
                     string[] temp = s.Trim().Split("=");
                     body.Add(temp);
                 }
-                string whereSub = m.Groups[6].ToString().Trim();
-                List<string[]> foot = new List<string[]>();
-                foreach (string s in whereSub.Split(" or "))
-                {
-                    string[] temp = s.Trim().Split(" and ");
-                    foot.Add(temp);
-                }
-                newStruct = new SQLStruct.Builder(whereSub == "" ? "delete" : "delete where")
+                newStruct = new SQLStruct.Builder("update")
                     .setSQLHead(new string[] { databaseName, tableName })
                     .setSQLBody(body.ToArray())
                     .setSQLFoot(foot.ToArray())
@@ -268,6 +184,38 @@ namespace csdbmt
             }
 
         }
+        private void SelectParse(string x)
+        {
+            Match m;
+            bool hasWhere = x.IndexOf("where") > -1;
+            if (hasWhere)
+            {
+                m = Regex.Match(x, "select *(.*) *where *(.*) *");
+            }
+            else
+            {
+                m = Regex.Match(x, "select *(.*)( *)");
+            }
+            if (m.Success)
+            {
+                List<string> head;
+                List<string[]> body = new List<string[]>();
+                head = (from s in m.Groups[1].ToString().Split(",") select s).ToList();
+                if (hasWhere)
+                {
+                    string whereSub = m.Groups[2].ToString().Trim();
 
+                    foreach (string s in whereSub.Split(" or "))
+                    {
+                        string[] temp = s.Trim().Split(" and ");
+                        body.Add(temp);
+                    }
+                }
+                newStruct = new SQLStruct.Builder("select")
+                    .setSQLHead(head.ToArray())
+                    .setSQLBody(body.ToArray())
+                    .Build();
+            }
+        }
     }
 }
