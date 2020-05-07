@@ -98,6 +98,21 @@ namespace csdbmt
                         }
                         break;
                     }
+                case "delete":
+                    {
+                        if (s.SQLHead.Length > 1)
+                        {
+                            Database db = dbs.Get(s.SQLHead[0]);
+                            DatabaseTable dt = db.Get(s.SQLHead[1]);
+                            dt.ToEmpty();
+                        }
+                        else
+                        {
+                            throw new Exception("SQLAction -> Handle(): Delete error: length <= 1");
+                        }
+                        break;
+                    }
+
                 default:
                     throw new Exception("SQLManager -> Work(): An unexcepted SQL action type.");
             }

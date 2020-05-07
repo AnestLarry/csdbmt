@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace csdbmt
 {
@@ -117,6 +116,10 @@ namespace csdbmt
             }
             databaseTableFields.Add(Name, new DatabaseTableField(DataType));
         }
+        public void ToEmpty()
+        {
+            databaseTableFields = new Dictionary<string, DatabaseTableField>();
+        }
     }
     public class DatabaseTableField
     {
@@ -135,7 +138,6 @@ namespace csdbmt
                     break;
                 default:
                     throw new Exception("DatabaseTableField -> Type out of suppose.");
-                    break;
             }
         }
         public IEnumerable<dynamic> travel()
@@ -156,7 +158,7 @@ namespace csdbmt
                     Data.Add((int)x);
                     break;
                 case "float":
-                    Data.Add((double)x);
+                    Data.Add((float)x);
                     break;
                 case "string":
                     Data.Add((string)x);
@@ -166,8 +168,11 @@ namespace csdbmt
                     break;
                 default:
                     throw new Exception("DatabaseTableField -> Add(): Type out of suppose.");
-                    break;
             }
+        }
+        public void ToEmpty()
+        {
+            Data = new List<dynamic>();
         }
     }
 }

@@ -17,7 +17,6 @@ namespace csdbmt
             this.SQLFoot = x.getSQLFoot;
             this.SQLTail = x.getSQLTail;
         }
-
         public override string ToString()
         {
             return string.Format("SQLStruct [ \n SQLMode [{0}]\n SQLHead [{1}]\n SQLBody [{2}]\n SQLFoot [{3}]\n SQLTail [{4}]\n]",
